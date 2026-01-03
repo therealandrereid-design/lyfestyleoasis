@@ -2,36 +2,43 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
+import graduationCut from "@/assets/gallery/graduation-cut.jpg";
+import curlyDesign from "@/assets/gallery/curly-design.jpg";
+import kidsFade from "@/assets/gallery/kids-fade.jpg";
+import cleanWaves from "@/assets/gallery/clean-waves.jpg";
+import beardTrim from "@/assets/gallery/beard-trim.jpg";
+import lineDesign from "@/assets/gallery/line-design.jpg";
+
 const galleryImages = [
   {
-    src: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&h=600&fit=crop",
-    alt: "Clean fade haircut",
-    title: "Clean Fade"
+    src: graduationCut,
+    alt: "Clean fade with beard trim - graduation look",
+    title: "Graduation Ready"
   },
   {
-    src: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&h=600&fit=crop",
-    alt: "Precision beard trim",
+    src: curlyDesign,
+    alt: "Curly top with geometric line design",
+    title: "Curly Design"
+  },
+  {
+    src: kidsFade,
+    alt: "Kids fade with clean shape-up",
+    title: "Kids Fade"
+  },
+  {
+    src: cleanWaves,
+    alt: "Clean waves with beard trim",
+    title: "Clean Waves"
+  },
+  {
+    src: beardTrim,
+    alt: "Professional beard trim and shape",
     title: "Beard Trim"
   },
   {
-    src: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&h=600&fit=crop",
-    alt: "Classic shape-up",
-    title: "Shape-Up"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&h=600&fit=crop",
-    alt: "Modern taper cut",
-    title: "Taper Cut"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&h=600&fit=crop",
-    alt: "Textured crop",
-    title: "Textured Crop"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?w=600&h=600&fit=crop",
-    alt: "Classic gentleman cut",
-    title: "Gentleman Cut"
+    src: lineDesign,
+    alt: "Creative line design fade",
+    title: "Line Design"
   }
 ];
 
@@ -125,7 +132,7 @@ const Gallery = () => {
 
               {/* Image */}
               <img
-                src={galleryImages[selectedIndex].src.replace('w=600&h=600', 'w=1200&h=1200')}
+                src={galleryImages[selectedIndex].src}
                 alt={galleryImages[selectedIndex].alt}
                 className="w-full max-h-[80vh] object-contain"
               />
