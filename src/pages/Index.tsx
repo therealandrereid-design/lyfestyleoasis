@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/layout/WhatsAppButton";
 import Hero from "@/components/sections/Hero";
 import Services from "@/components/sections/Services";
+import Gallery from "@/components/sections/Gallery";
 import Booking from "@/components/sections/Booking";
 import About from "@/components/sections/About";
 import Contact from "@/components/sections/Contact";
@@ -31,6 +32,7 @@ const Index = () => {
       <main>
         <Hero />
         <Services />
+        <Gallery />
         <Booking />
         <About />
         <Contact />
