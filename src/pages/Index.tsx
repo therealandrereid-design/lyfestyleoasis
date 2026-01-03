@@ -1,12 +1,42 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect } from "react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import WhatsAppButton from "@/components/layout/WhatsAppButton";
+import Hero from "@/components/sections/Hero";
+import Services from "@/components/sections/Services";
+import Booking from "@/components/sections/Booking";
+import About from "@/components/sections/About";
+import Contact from "@/components/sections/Contact";
 
 const Index = () => {
+  useEffect(() => {
+    // Update page title and meta for SEO
+    document.title = "Lyfestyle Oasis | Professional Barbershop Jamaica - Book Appointment";
+    
+    // Add meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Lyfestyle Oasis - Premium barbershop in Jamaica offering professional grooming services by appointment. Experience NYC-level haircuts, beard trims, and shape-ups. Book now!");
+    } else {
+      const meta = document.createElement("meta");
+      meta.name = "description";
+      meta.content = "Lyfestyle Oasis - Premium barbershop in Jamaica offering professional grooming services by appointment. Experience NYC-level haircuts, beard trims, and shape-ups. Book now!";
+      document.head.appendChild(meta);
+    }
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        <Hero />
+        <Services />
+        <Booking />
+        <About />
+        <Contact />
+      </main>
+      <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
