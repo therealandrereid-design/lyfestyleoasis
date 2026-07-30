@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, Phone, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const navLinks = [
   { name: "Home", href: "#home" },
@@ -65,6 +66,12 @@ const Header = () => {
               {link.name}
             </a>
           ))}
+          <Link
+            to="/masterclass"
+            className="text-sm font-medium text-cream-muted hover:text-primary transition-colors"
+          >
+            Masterclass
+          </Link>
         </nav>
 
         {/* Desktop CTA */}
@@ -112,6 +119,13 @@ const Header = () => {
               {link.name}
             </a>
           ))}
+          <Link
+            to="/masterclass"
+            onClick={() => setIsOpen(false)}
+            className="text-lg font-medium text-cream-muted hover:text-primary transition-colors py-2"
+          >
+            Masterclass
+          </Link>
           <div className="flex flex-col gap-3 pt-4 border-t border-border">
             <a href="tel:+18768528938" className="w-full">
               <Button variant="glass" className="w-full">
