@@ -3,6 +3,19 @@ import { Calendar, Clock, User, Phone, MessageSquare, Send } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
+// 12-hour time slots (no 24-hour "army time")
+const timeSlots = (() => {
+  const slots: string[] = [];
+  for (let m = 9 * 60; m <= 19 * 60 + 30; m += 30) {
+    const h24 = Math.floor(m / 60);
+    const mins = m % 60;
+    const period = h24 >= 12 ? "PM" : "AM";
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    slots.push(`${h12}:${mins.toString().padStart(2, "0")} ${period}`);
+  }
+  return slots;
+})();
+
 const services = [
   "Signature Haircut",
   "Beard Trim & Shape",
@@ -219,14 +232,22 @@ Thank you!`;
                   <Clock className="w-4 h-4 text-primary" />
                   Preferred Time
                 </label>
-                <input
-                  type="time"
+                <select
                   name="time"
                   value={formData.time}
                   onChange={handleChange}
                   className="w-full h-12 px-4 rounded-lg bg-muted border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
                   required
-                />
+                >
+                  <option value="" className="bg-charcoal">
+                    Select a time
+                  </option>
+                  {timeSlots.map((slot) => (
+                    <option key={slot} value={slot} className="bg-charcoal">
+                      {slot}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
