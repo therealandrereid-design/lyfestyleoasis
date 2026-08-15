@@ -25,6 +25,15 @@ const services = [
   "Premium Experience",
 ];
 
+const serviceDurations: Record<string, number> = {
+  "Signature Haircut": 45,
+  "Beard Trim & Shape": 30,
+  "Shape-Up": 30,
+  "Haircut + Beard": 60,
+  "Kids Haircut": 30,
+  "Premium Experience": 90,
+};
+
 const Booking = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
