@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Calendar, Clock, User, Phone, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 // 12-hour time slots (no 24-hour "army time")
 const timeSlots = (() => {
@@ -35,7 +35,6 @@ const serviceDurations: Record<string, number> = {
 };
 
 const Booking = () => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -57,37 +56,29 @@ const Booking = () => {
 
     // Validate form
     if (!formData.name.trim() || formData.name.length > 100) {
-      toast({
-        title: "Invalid Name",
+      toast.error("Invalid Name", {
         description: "Please enter a valid name (max 100 characters).",
-        variant: "destructive",
       });
       return;
     }
 
     if (!formData.phone.trim() || !/^[\d\s\-+()]+$/.test(formData.phone)) {
-      toast({
-        title: "Invalid Phone",
+      toast.error("Invalid Phone", {
         description: "Please enter a valid phone number.",
-        variant: "destructive",
       });
       return;
     }
 
     if (!formData.service) {
-      toast({
-        title: "Service Required",
+      toast.error("Service Required", {
         description: "Please select a service.",
-        variant: "destructive",
       });
       return;
     }
 
     if (!formData.date || !formData.time) {
-      toast({
-        title: "Date & Time Required",
+      toast.error("Date & Time Required", {
         description: "Please select your preferred date and time.",
-        variant: "destructive",
       });
       return;
     }
@@ -114,28 +105,46 @@ const Booking = () => {
         }
       );
 
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (data?.status === "error") {
+        toast.error("Time Slot Unavailable", {
+          description: "This time slot is already booked. Please choose another time.",
+        });
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("Webhook request failed");
       }
 
-      toast({
-        title: "Booking Request Sent!",
-        description: "We'll confirm your appointment via WhatsApp shortly.",
-      });
+      if (data?.status === "success") {
+        toast.success("Booking Request Sent!", {
+          description: "We'll confirm your appointment via WhatsApp shortly.",
+        });
 
-      setFormData({
-        name: "",
-        phone: "",
-        service: "",
-        date: "",
-        time: "",
-        notes: "",
-      });
+        setFormData({
+          name: "",
+          phone: "",
+          service: "",
+          date: "",
+          time: "",
+          notes: "",
+        });
+      } else {
+        throw new Error("Unexpected response from server");
+      }
     } catch (error) {
-      toast({
-        title: "Submission Failed",
-        description: "Please try again or contact us directly on WhatsApp.",
-        variant: "destructive",
+      toast.error("Submission Failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please try again or contact us directly on WhatsApp.",
       });
     } finally {
       setIsSubmitting(false);
