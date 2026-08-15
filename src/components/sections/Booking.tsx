@@ -25,6 +25,15 @@ const services = [
   "Premium Experience",
 ];
 
+const serviceDurations: Record<string, number> = {
+  "Signature Haircut": 45,
+  "Beard Trim & Shape": 30,
+  "Shape-Up": 30,
+  "Haircut + Beard": 60,
+  "Kids Haircut": 30,
+  "Premium Experience": 90,
+};
+
 const Booking = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -43,9 +52,9 @@ const Booking = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!formData.name.trim() || formData.name.length > 100) {
       toast({
@@ -85,39 +94,52 @@ const Booking = () => {
 
     setIsSubmitting(true);
 
-    // Build WhatsApp message
-    const message = `Hi! I'd like to book an appointment at Lyfestyle Oasis.
+    const payload = {
+      client_name: formData.name.trim(),
+      client_phone: formData.phone.trim(),
+      service_name: formData.service,
+      appointment_date: formData.date,
+      appointment_time: formData.time,
+      duration_minutes: serviceDurations[formData.service] || 60,
+      notes: formData.notes.trim().substring(0, 500),
+    };
 
-*Booking Details:*
-• Name: ${formData.name.trim()}
-• Phone: ${formData.phone.trim()}
-• Service: ${formData.service}
-• Date: ${formData.date}
-• Time: ${formData.time}
-${formData.notes.trim() ? `• Notes: ${formData.notes.trim().substring(0, 500)}` : ""}
+    try {
+      const response = await fetch(
+        "https://hook.us2.make.com/8ccf1sgiluccywuge52ac5j33ojkv6ov",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
-Thank you!`;
+      if (!response.ok) {
+        throw new Error("Webhook request failed");
+      }
 
-    const phoneNumber = "18768528938";
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      toast({
+        title: "Booking Request Sent!",
+        description: "We'll confirm your appointment via WhatsApp shortly.",
+      });
 
-    // Open WhatsApp
-    window.open(whatsappUrl, "_blank");
-
-    toast({
-      title: "Booking Request Sent!",
-      description: "You'll be redirected to WhatsApp to confirm your appointment.",
-    });
-
-    setIsSubmitting(false);
-    setFormData({
-      name: "",
-      phone: "",
-      service: "",
-      date: "",
-      time: "",
-      notes: "",
-    });
+      setFormData({
+        name: "",
+        phone: "",
+        service: "",
+        date: "",
+        time: "",
+        notes: "",
+      });
+    } catch (error) {
+      toast({
+        title: "Submission Failed",
+        description: "Please try again or contact us directly on WhatsApp.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Get minimum date (today)
