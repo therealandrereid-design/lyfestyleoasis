@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar, Clock, User, Phone, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const WHATSAPP_NUMBER = "18768528938";
 
@@ -46,12 +47,51 @@ const Booking = () => {
     notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const fetchBookedSlots = useCallback(async (date: string) => {
+    if (!date) {
+      setBookedSlots([]);
+      return;
+    }
+    setIsLoadingSlots(true);
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("appointment_time")
+        .eq("appointment_date", date)
+        .neq("status", "cancelled");
+
+      if (error) throw error;
+
+      setBookedSlots(data?.map((b: { appointment_time: string }) => b.appointment_time) || []);
+    } catch {
+      setBookedSlots([]);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  }, []);
+
+  // When the date changes, fetch which time slots are already taken
+  useEffect(() => {
+    if (formData.date) {
+      fetchBookedSlots(formData.date);
+      // Reset the selected time if it's now booked
+      if (formData.time && bookedSlots.includes(formData.time)) {
+        setFormData((prev) => ({ ...prev, time: "" }));
+      }
+    } else {
+      setBookedSlots([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.date]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,24 +127,49 @@ const Booking = () => {
 
     setIsSubmitting(true);
 
-    const bookingMessage = `*New Booking Request*%0A%0A` +
-      `*Name:* ${encodeURIComponent(formData.name.trim())}%0A` +
-      `*Phone:* ${encodeURIComponent(formData.phone.trim())}%0A` +
-      `*Service:* ${encodeURIComponent(formData.service)}%0A` +
-      `*Date:* ${encodeURIComponent(formData.date)}%0A` +
-      `*Time:* ${encodeURIComponent(formData.time)}%0A` +
-      `*Duration:* ${serviceDurations[formData.service] || 60} minutes%0A` +
-      (formData.notes.trim()
-        ? `*Notes:* ${encodeURIComponent(formData.notes.trim().substring(0, 500))}%0A`
-        : "");
-
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${bookingMessage}`;
-
     try {
+      // Save booking to the database
+      const { error: insertError } = await supabase.from("bookings").insert({
+        client_name: formData.name.trim(),
+        client_phone: formData.phone.trim(),
+        service_name: formData.service,
+        appointment_date: formData.date,
+        appointment_time: formData.time,
+        duration_minutes: serviceDurations[formData.service] || 60,
+        notes: formData.notes.trim().substring(0, 500) || null,
+        status: "pending",
+      });
+
+      if (insertError) {
+        if (insertError.code === "23505") {
+          toast.error("Time Slot Unavailable", {
+            description: "This time slot was just booked. Please choose another time.",
+          });
+          fetchBookedSlots(formData.date);
+          setIsSubmitting(false);
+          return;
+        }
+        throw new Error(insertError.message);
+      }
+
+      // Build WhatsApp message with booking details
+      const bookingMessage = `*New Booking Request*%0A%0A` +
+        `*Name:* ${encodeURIComponent(formData.name.trim())}%0A` +
+        `*Phone:* ${encodeURIComponent(formData.phone.trim())}%0A` +
+        `*Service:* ${encodeURIComponent(formData.service)}%0A` +
+        `*Date:* ${encodeURIComponent(formData.date)}%0A` +
+        `*Time:* ${encodeURIComponent(formData.time)}%0A` +
+        `*Duration:* ${serviceDurations[formData.service] || 60} minutes%0A` +
+        (formData.notes.trim()
+          ? `*Notes:* ${encodeURIComponent(formData.notes.trim().substring(0, 500))}%0A`
+          : "");
+
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${bookingMessage}`;
+
       window.open(whatsappUrl, "_blank");
 
-      toast.success("Opening WhatsApp...", {
-        description: "We've prepared your booking details in WhatsApp. Just press send to confirm your appointment.",
+      toast.success("Booking Confirmed!", {
+        description: "Your slot is reserved. We've opened WhatsApp so you can send us the details to confirm.",
       });
 
       setFormData({
@@ -115,8 +180,9 @@ const Booking = () => {
         time: "",
         notes: "",
       });
+      setBookedSlots([]);
     } catch (error) {
-      toast.error("Could Not Open WhatsApp", {
+      toast.error("Booking Failed", {
         description:
           error instanceof Error
             ? error.message
@@ -243,17 +309,30 @@ const Booking = () => {
                   name="time"
                   value={formData.time}
                   onChange={handleChange}
-                  className="w-full h-12 px-4 rounded-lg bg-muted border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
+                  disabled={!formData.date || isLoadingSlots}
+                  className="w-full h-12 px-4 rounded-lg bg-muted border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
                   required
                 >
                   <option value="" className="bg-charcoal">
-                    Select a time
+                    {!formData.date
+                      ? "Select a date first"
+                      : isLoadingSlots
+                        ? "Loading..."
+                        : "Select a time"}
                   </option>
-                  {timeSlots.map((slot) => (
-                    <option key={slot} value={slot} className="bg-charcoal">
-                      {slot}
-                    </option>
-                  ))}
+                  {timeSlots.map((slot) => {
+                    const isBooked = bookedSlots.includes(slot);
+                    return (
+                      <option
+                        key={slot}
+                        value={slot}
+                        disabled={isBooked}
+                        className="bg-charcoal"
+                      >
+                        {slot} {isBooked ? "(Booked)" : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
