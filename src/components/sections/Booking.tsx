@@ -3,6 +3,8 @@ import { Calendar, Clock, User, Phone, MessageSquare, Send } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+const WHATSAPP_NUMBER = "18768528938";
+
 // 12-hour time slots (no 24-hour "army time")
 const timeSlots = (() => {
   const slots: string[] = [];
@@ -85,62 +87,36 @@ const Booking = () => {
 
     setIsSubmitting(true);
 
-    const payload = {
-      client_name: formData.name.trim(),
-      client_phone: formData.phone.trim(),
-      service_name: formData.service,
-      appointment_date: formData.date,
-      appointment_time: formData.time,
-      duration_minutes: serviceDurations[formData.service] || 60,
-      notes: formData.notes.trim().substring(0, 500),
-    };
+    const bookingMessage = `*New Booking Request*%0A%0A` +
+      `*Name:* ${encodeURIComponent(formData.name.trim())}%0A` +
+      `*Phone:* ${encodeURIComponent(formData.phone.trim())}%0A` +
+      `*Service:* ${encodeURIComponent(formData.service)}%0A` +
+      `*Date:* ${encodeURIComponent(formData.date)}%0A` +
+      `*Time:* ${encodeURIComponent(formData.time)}%0A` +
+      `*Duration:* ${serviceDurations[formData.service] || 60} minutes%0A` +
+      (formData.notes.trim()
+        ? `*Notes:* ${encodeURIComponent(formData.notes.trim().substring(0, 500))}%0A`
+        : "");
+
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${bookingMessage}`;
 
     try {
-      const response = await fetch(
-        "https://hook.us2.make.com/8ccf1sgiluccywuge52ac5j33ojkv6ov",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      window.open(whatsappUrl, "_blank");
 
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
+      toast.success("Opening WhatsApp...", {
+        description: "We've prepared your booking details in WhatsApp. Just press send to confirm your appointment.",
+      });
 
-      if (data?.status === "error") {
-        toast.error("Time Slot Unavailable", {
-          description: "This time slot is already booked. Please choose another time.",
-        });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Webhook request failed");
-      }
-
-      if (data?.status === "success") {
-        toast.success("Booking Request Sent!", {
-          description: "We'll confirm your appointment via WhatsApp shortly.",
-        });
-
-        setFormData({
-          name: "",
-          phone: "",
-          service: "",
-          date: "",
-          time: "",
-          notes: "",
-        });
-      } else {
-        throw new Error("Unexpected response from server");
-      }
+      setFormData({
+        name: "",
+        phone: "",
+        service: "",
+        date: "",
+        time: "",
+        notes: "",
+      });
     } catch (error) {
-      toast.error("Submission Failed", {
+      toast.error("Could Not Open WhatsApp", {
         description:
           error instanceof Error
             ? error.message
