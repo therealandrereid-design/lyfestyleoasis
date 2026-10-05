@@ -63,15 +63,11 @@ const Booking = () => {
     }
     setIsLoadingSlots(true);
     try {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("appointment_time")
-        .eq("appointment_date", date)
-        .neq("status", "cancelled");
+      const { data, error } = await supabase.rpc("get_booked_times", { p_date: date });
 
       if (error) throw error;
 
-      setBookedSlots(data?.map((b: { appointment_time: string }) => b.appointment_time) || []);
+      setBookedSlots(Array.isArray(data) ? (data as string[]) : []);
     } catch {
       setBookedSlots([]);
     } finally {
